@@ -8,7 +8,7 @@ function parseCommandline() {
         .requiredOption('-f, --file <file>', 'input file')
         .requiredOption('-t, --topic <topic>', 'topic to publish to')
         .option('-x, --batch-size <batchSize>', 'number of messages', 10000)
-        .version('0.0.1')
+        .version('1.0.0')
         .parse();
     return program.opts();
 }
@@ -62,7 +62,6 @@ async function run(programOptions) {
         });
 
         if (batch.length >= options.maxBatch) {
-            console.log(`Max size is ${maxMessageSize}.`);
             await sendMessagesAsync(batch);
             totalMessages += batch.length;
             batch = [];
@@ -73,11 +72,10 @@ async function run(programOptions) {
         await sendMessagesAsync(batch);
         totalMessages += batch.length;
     }
-    console.log(`Totally sent ${totalMessages} messages.`);
+    console.log(`Sent ${totalMessages} messages in total.`);
 
     await producer.disconnect();
-    console.log(`Disconnected`);
 }
 
 const opts = parseCommandline();
-run(opts).finally(() => console.log("That's all!"));
+run(opts).finally(() => console.log("Done with publishing. Exiting."));
