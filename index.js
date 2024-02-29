@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const {Kafka, Partitioners} = require('kafkajs')
 const readline = require('readline');
 const { program } = require('commander');
