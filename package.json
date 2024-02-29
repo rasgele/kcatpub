@@ -1,0 +1,23 @@
+{
+  "name": "@vozzen/kcatpub",
+  "version": "1.0.0",
+  "description": "Kafka publisher for data exported by kcat",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rasgele/kcatpub.git"
+  },
+  "keywords": [
+    "kafka",
+    "kcat"
+  ],
+  "author": "Volkan Sen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rasgele/kcatpub/issues"
+  },
+  "homepage": "https://github.com/rasgele/kcatpub#readme"
+}
