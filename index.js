@@ -34,10 +34,6 @@ class SessionManager {
     // Helper method to compare options
     optionsMatch(options1, options2) {
         return options1.input === options2.input && options1.topic === options2.topic;
-        // Here you can define how you want to compare the options.
-        // For simplicity, this example compares the JSON string representations.
-        // Note: This method might need adjustments based on the actual structure and requirements of the options.
-        return JSON.stringify(options1) === JSON.stringify(options2);
     }
 }
 
@@ -88,7 +84,6 @@ class KafkaPublisher {
             }
 
             if (this.linesProcessed < sessionOffset) {
-                console.log(`Skipping line ${this.linesProcessed} as it is before the session offset.`);
                 this.linesProcessed++;
                 continue;
             }
@@ -124,11 +119,22 @@ function parseCommandline() {
         .requiredOption('-f, --file <file>', 'input file')
         .requiredOption('-t, --topic <topic>', 'topic to publish to')
         .option('-b, --broker-url <url>', 'Kafka broker URL', 'localhost:29092')
-        .option('-x, --batch-size <batchSize>', 'number of messages', 10000)
-        .option('-s, --session', 'use session', false)
+        .option('-x, --batch-size <batchSize>', 'number of messages to batch before sending', 10000)
+        .option('-s, --session <sessionName>', 'Store or resume a session with a specific name')
         .version('1.0.0')
         .parse();
     return program.opts();
+}
+
+function createOptions(programOptions) {
+    return {
+        brokers: [programOptions.brokerUrl],
+        clientId: 'kcatpub-producer',
+        input: programOptions.file,
+        topic: programOptions.topic,
+        maxBatch: programOptions.batchSize,
+        session: programOptions.session,
+    };
 }
 
 async function gracefulShutdown(publisher) {
@@ -143,21 +149,10 @@ async function gracefulShutdown(publisher) {
     process.exit(0);
 }
 
-function createOptions(programOptions) {
-    return {
-        brokers: [programOptions.brokerUrl],
-        clientId: 'kcatpub-producer',
-        input: programOptions.file,
-        topic: programOptions.topic,
-        maxBatch: programOptions.batchSize
-        , session: programOptions.session,
-    };
-}
-
 async function main() {
     const programOptions = parseCommandline();
     const options = createOptions(programOptions);
-    const sessionManager = new SessionManager();
+    const sessionManager = new SessionManager(`session.${options.session ?? 'default'}.json`);
     const publisher = new KafkaPublisher(options, sessionManager);
 
     global.shutdown = false;

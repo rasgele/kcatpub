@@ -131,4 +131,4 @@ dist
 
 .idea
 session.json
-
+session.*.json
