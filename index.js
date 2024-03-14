@@ -116,11 +116,11 @@ class KafkaPublisher {
 
 function parseCommandline() {
     program
-        .requiredOption('-f, --file <file>', 'input file')
-        .requiredOption('-t, --topic <topic>', 'topic to publish to')
-        .option('-b, --broker-url <url>', 'Kafka broker URL', 'localhost:29092')
-        .option('-x, --batch-size <batchSize>', 'number of messages to batch before sending', 10000)
-        .option('-s, --session <sessionName>', 'Store or resume a session with a specific name')
+        .requiredOption('-f, --file <file>', 'Input file to read messages from.')
+        .requiredOption('-t, --topic <topic>', 'Topic to publish to.')
+        .option('-b, --broker-url <url>', 'Kafka broker URL.', 'localhost:29092')
+        .option('-x, --batch-size <batchSize>', 'Number of messages to batch before sending.', 10000)
+        .option('-s, --session <sessionName>', 'Store or resume a session with a specific name.')
         .version('1.0.0')
         .parse();
     return program.opts();
