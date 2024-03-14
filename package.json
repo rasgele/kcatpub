@@ -1,6 +1,6 @@
 {
   "name": "@vozzen/kcatpub",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Kafka publisher for data exported by kcat",
   "main": "index.js",
   "scripts": {

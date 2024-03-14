@@ -13,11 +13,15 @@ class SessionManager {
         console.log(`Successfully saved the latest offset (${offset}) to session. Use -s option to continue from where it left off.`);
     }
 
-    async getSessionOffset() {
+    async getSessionOffset(currentOptions) {
         try {
             if (fs.existsSync(this.sessionFile)) {
                 const fileContent = await fs.promises.readFile(this.sessionFile, { encoding: 'utf8' });
                 const sessionSettings = JSON.parse(fileContent);
+                // Check if the current options match the options stored in the session file
+                if (!this.optionsMatch(sessionSettings.options, currentOptions)) {
+                    throw new Error('The current options do not match the options stored in the session file.');
+                }
                 return isNaN(sessionSettings.startIndex) ? 0 : sessionSettings.startIndex;
             }
         } catch (err) {
@@ -25,6 +29,15 @@ class SessionManager {
             throw err;
         }
         return 0;
+    }
+
+    // Helper method to compare options
+    optionsMatch(options1, options2) {
+        return options1.input === options2.input && options1.topic === options2.topic;
+        // Here you can define how you want to compare the options.
+        // For simplicity, this example compares the JSON string representations.
+        // Note: This method might need adjustments based on the actual structure and requirements of the options.
+        return JSON.stringify(options1) === JSON.stringify(options2);
     }
 }
 
@@ -38,6 +51,7 @@ class KafkaPublisher {
         });
         this.producer = this.kafka.producer({ createPartitioner: Partitioners.DefaultPartitioner });
         this.linesProcessed = 0;
+        this.sessionOffsetToPersist = null;
         this.lastSendPromise = Promise.resolve();
     }
 
@@ -51,14 +65,20 @@ class KafkaPublisher {
             await this.producer.send({ topic: this.options.topic, messages });
             console.log(`Sent message batch of size ${messages.length}.`);
             this.linesProcessed += messages.length;
+            this.sessionOffsetToPersist = this.linesProcessed;
         } catch (error) {
-            await this.sessionManager.saveSession(this.linesProcessed, this.options);
+            await this.sessionManager.saveSession(this.sessionOffsetToPersist, this.options);
             throw error;
         }
     }
 
     async run() {
-        const sessionOffset = this.options.session ? await this.sessionManager.getSessionOffset() : 0;
+        let sessionOffset = 0;
+        if (this.options.session) {
+            sessionOffset = await this.sessionManager.getSessionOffset(this.options);
+            console.log(`Set session offset as ${sessionOffset}.`);
+        }
+        
         const rl = readline.createInterface({ input: fs.createReadStream(this.options.input) });
         let batch = [];
 
@@ -68,6 +88,7 @@ class KafkaPublisher {
             }
 
             if (this.linesProcessed < sessionOffset) {
+                console.log(`Skipping line ${this.linesProcessed} as it is before the session offset.`);
                 this.linesProcessed++;
                 continue;
             }
@@ -115,7 +136,10 @@ async function gracefulShutdown(publisher) {
     global.shutdown = true;
     await publisher.lastSendPromise;
     await publisher.producer.disconnect();
-    await publisher.sessionManager.saveSession(publisher.linesProcessed, publisher.options);
+    if (publisher.sessionOffsetToPersist) {
+        await publisher.sessionManager.saveSession(publisher.sessionOffsetToPersist, publisher.options);
+    }
+    console.log('Graceful shutdown completed. Bye..');
     process.exit(0);
 }
 
@@ -141,10 +165,7 @@ async function main() {
     process.on('SIGTERM', () => gracefulShutdown(publisher));
 
     await publisher.connect();
-    await publisher.run().catch(async error => {
-        console.error(`Failed to run: ${error.message}`);
-        await gracefulShutdown(publisher);
-    });
+    await publisher.run();
 }
 
 main().catch(error => console.error(`Execution failed: ${error.message}`));
