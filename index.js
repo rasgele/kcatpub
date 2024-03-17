@@ -122,7 +122,7 @@ function parseCommandline() {
         .option('-b, --broker-url <url>', 'Kafka broker URL.', 'localhost:29092')
         .option('-x, --batch-size <batchSize>', 'Number of messages to batch before sending.', 10000)
         .option('-s, --session <sessionName>', 'Store or resume a session with a specific name.')
-        .version('1.0.0')
+        .version(require('./package.json').version)
         .parse();
     return program.opts();
 }
