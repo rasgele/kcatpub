@@ -10,7 +10,9 @@
     "type": "git",
     "url": "git+https://github.com/rasgele/kcatpub.git"
   },
-  "bin": "./index.js",
+  "bin": {
+    "kcatpub": "index.js"
+  },
   "keywords": [
     "kafka",
     "kcat"

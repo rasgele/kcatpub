@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const fs = require('fs');
 const { Kafka, Partitioners } = require('kafkajs');
 const readline = require('readline');
@@ -74,7 +75,7 @@ class KafkaPublisher {
             sessionOffset = await this.sessionManager.getSessionOffset(this.options);
             console.log(`Set session offset as ${sessionOffset}.`);
         }
-        
+
         const rl = readline.createInterface({ input: fs.createReadStream(this.options.input) });
         let batch = [];
 
